@@ -2,7 +2,7 @@ Summary:	Arc archiver
 Summary(pl):	Archiwizer arc
 Name:		arc
 Version:	5.21e
-Release:	5
+Release:	6
 License:	distributable if unmodified
 Group:		Applications/Archiving
 Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}521e.pl8.tar.Z
