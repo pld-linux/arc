@@ -33,8 +33,6 @@ install arc marc $RPM_BUILD_ROOT%{_bindir}
 
 install arc.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
-gzip -9nf Arc521.doc Arcinfo Changes.521 README
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -42,4 +40,4 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/*
 %{_mandir}/man1/arc.1*
-%doc *.gz
+%doc Arc521.doc Arcinfo Changes.521 README
