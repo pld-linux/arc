@@ -3,7 +3,7 @@ Summary(pl):	Archiwizer arc
 Name:		arc
 Version:	5.21e
 Release:	5
-License:	Distributable if unmodified
+License:	distributable if unmodified
 Group:		Applications/Archiving
 Group(de):	Applikationen/Archivierung
 Group(pl):	Aplikacje/Archiwizacja
