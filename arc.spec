@@ -3,11 +3,11 @@ Summary(pl):	Archiwizer arc
 Name:		arc
 Version:	5.21e
 Release:	4
-Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}521e.pl8.tar.Z
-License:	distributable if unmodified
+License:	Distributable if unmodified
 Group:		Applications/Archiving
 Group(de):	Applikationen/Archivierung
 Group(pl):	Aplikacje/Archiwizacja
+Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}521e.pl8.tar.Z
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -28,9 +28,11 @@ stare archiwa .arc.
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{_bindir},%{_mandir}/man1}
-install arc $RPM_BUILD_ROOT%{_bindir}/arc
-install marc $RPM_BUILD_ROOT%{_bindir}/marc
-install arc.1 $RPM_BUILD_ROOT%{_mandir}/man1/arc.1
+
+install arc marc $RPM_BUILD_ROOT%{_bindir}
+
+install arc.1 $RPM_BUILD_ROOT%{_mandir}/man1
+
 gzip -9nf Arc521.doc Arcinfo Changes.521 README
 
 %clean
