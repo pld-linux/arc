@@ -6,6 +6,7 @@ Release:	5
 License:	distributable if unmodified
 Group:		Applications/Archiving
 Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}521e.pl8.tar.Z
+# Source0-md5:	a6eca0eb9d8cfb8d9bb62753c85759cb
 Patch0:		%{name}-time.patch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
