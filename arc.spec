@@ -2,7 +2,7 @@ Summary:	Arc archiver
 Summary(pl):	Archiwizer arc
 Name:		arc
 Version:	5.21e
-Release:	4
+Release:	5
 License:	Distributable if unmodified
 Group:		Applications/Archiving
 Group(de):	Applikationen/Archivierung
