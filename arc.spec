@@ -8,6 +8,7 @@ Group:		Applications/Archiving
 Group(de):	Applikationen/Archivierung
 Group(pl):	Aplikacje/Archiwizacja
 Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}521e.pl8.tar.Z
+Patch0:		%{name}-time.patch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -21,6 +22,7 @@ stare archiwa .arc.
 
 %prep
 %setup -q -c
+%patch0 -p1
 
 %build
 %{__make} OPT="%{rpmcflags}"
