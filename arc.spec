@@ -24,7 +24,9 @@ stare archiwa .arc.
 %patch0 -p1
 
 %build
-%{__make} OPT="%{rpmcflags}"
+%{__make} \
+	CC="%{__cc}" \
+	OPT="%{rpmcflags}"
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -39,6 +41,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
+%doc Arc521.doc Arcinfo Changes.521 README
 %attr(755,root,root) %{_bindir}/*
 %{_mandir}/man1/arc.1*
-%doc Arc521.doc Arcinfo Changes.521 README
