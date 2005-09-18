@@ -33,3 +33,23 @@ diff -urN arc.org/tmclock.c arc/tmclock.c
  
  long	tzone;
  
+--- arc-5.21j/arcdos.c~	2003-10-31 03:32:19.000000000 +0100
++++ arc-5.21j/arcdos.c	2005-09-19 01:15:06.000000000 +0200
+@@ -30,17 +30,8 @@
+ #if	UNIX
+ #include <sys/types.h>
+ #include <sys/stat.h>
+-#if	BSD
+ #include <sys/time.h>
+-#else	
+ #include <time.h>		/* Sys V. Bleah. */
+-#if	NEED_TIMEVAL
+-struct	timeval {
+-	long	tv_sec;
+-	long	tv_usec;
+-};
+-#endif
+-#endif	/* BSD vs SYSV */
+ #endif
+ 
+ #if	GEMDOS
