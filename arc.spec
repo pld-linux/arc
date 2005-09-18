@@ -1,13 +1,14 @@
 Summary:	Arc archiver
 Summary(pl):	Archiwizer arc
 Name:		arc
-Version:	5.21e
-Release:	6
+Version:	5.21j
+Release:	1
 License:	distributable if unmodified
 Group:		Applications/Archiving
-Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}521e.pl8.tar.Z
-# Source0-md5:	a6eca0eb9d8cfb8d9bb62753c85759cb
+Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}-%{version}.tar.gz
+# Source0-md5:	b3c12bbc71c440df19d3a8a653d4baf5
 Patch0:		%{name}-time.patch
+Patch1:		%{name}-gcc4.patch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -20,8 +21,9 @@ parê zip/unzip, ale nadal przydatny je¿eli potrzebujesz rozpakowaæ
 stare archiwa .arc.
 
 %prep
-%setup -q -c
+%setup -q
 %patch0 -p1
+%patch1 -p1
 
 %build
 %{__make} \
@@ -41,6 +43,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc Arc521.doc Arcinfo Changes.521 README
+%doc Arc521.doc Arcinfo Changes.521 Readme
 %attr(755,root,root) %{_bindir}/*
 %{_mandir}/man1/arc.1*
