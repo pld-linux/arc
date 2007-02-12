@@ -1,5 +1,5 @@
 Summary:	Arc archiver
-Summary(pl):	Archiwizer arc
+Summary(pl.UTF-8):   Archiwizer arc
 Name:		arc
 Version:	5.21j
 Release:	1
@@ -15,9 +15,9 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 arc file archiver and compressor. Long since superseded by zip/unzip
 but useful if you have old .arc files you need to unpack.
 
-%description -l pl
-arc jest archiwizerem i kompresorem plików. Dawno zast±piony przez
-parê zip/unzip, ale nadal przydatny je¿eli potrzebujesz rozpakowaæ
+%description -l pl.UTF-8
+arc jest archiwizerem i kompresorem plikÃ³w. Dawno zastÄ…piony przez
+parÄ™ zip/unzip, ale nadal przydatny jeÅ¼eli potrzebujesz rozpakowaÄ‡
 stare archiwa .arc.
 
 %prep
