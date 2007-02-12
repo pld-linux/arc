@@ -1,5 +1,5 @@
 Summary:	Arc archiver
-Summary(pl.UTF-8):   Archiwizer arc
+Summary(pl.UTF-8):	Archiwizer arc
 Name:		arc
 Version:	5.21j
 Release:	1
