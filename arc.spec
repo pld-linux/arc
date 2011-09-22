@@ -1,14 +1,14 @@
 Summary:	Arc archiver
 Summary(pl.UTF-8):	Archiwizer arc
 Name:		arc
-Version:	5.21j
+Version:	5.21p
 Release:	1
-License:	distributable if unmodified
+License:	GPL v2
 Group:		Applications/Archiving
-Source0:	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/%{name}-%{version}.tar.gz
-# Source0-md5:	b3c12bbc71c440df19d3a8a653d4baf5
+Source0:	http://downloads.sourceforge.net/arc/%{name}-%{version}.tar.gz
+# Source0-md5:	902ce24b23422880d474df6f1d9eba5e
 Patch0:		%{name}-time.patch
-Patch1:		%{name}-gcc4.patch
+URL:		http://arc.sourceforge.net/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -23,7 +23,6 @@ stare archiwa .arc.
 %prep
 %setup -q
 %patch0 -p1
-%patch1 -p1
 
 %build
 %{__make} \
@@ -36,13 +35,15 @@ install -d $RPM_BUILD_ROOT{%{_bindir},%{_mandir}/man1}
 
 install arc marc $RPM_BUILD_ROOT%{_bindir}
 
-install arc.1 $RPM_BUILD_ROOT%{_mandir}/man1
+install arc.1 marc.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc Arc521.doc Arcinfo Changes.521 Readme
-%attr(755,root,root) %{_bindir}/*
+%doc Arc521.doc Arcinfo Changelog LICENSE Readme
+%attr(755,root,root) %{_bindir}/arc
+%attr(755,root,root) %{_bindir}/marc
 %{_mandir}/man1/arc.1*
+%{_mandir}/man1/marc.1*
