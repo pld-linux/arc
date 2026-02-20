@@ -2,7 +2,7 @@ Summary:	Arc archiver
 Summary(pl.UTF-8):	Archiwizer arc
 Name:		arc
 Version:	5.21p
-Release:	1
+Release:	2
 License:	GPL v2
 Group:		Applications/Archiving
 Source0:	http://downloads.sourceforge.net/arc/%{name}-%{version}.tar.gz
