@@ -1,0 +1,800 @@
+diff -ur arc-5.21p.orig/Makefile arc-5.21p/Makefile
+--- arc-5.21p.orig/Makefile	2025-10-19 16:12:03.122159356 +0200
++++ arc-5.21p/Makefile	2025-10-18 21:10:36.667084240 +0200
+@@ -44,7 +44,7 @@
+ OPT = -O -Wall
+ # For MWC 3.0 on the Atari ST, use:
+ #CFLAGS = -VCOMPAC -VPEEP
+-CFLAGS = $(OPT) $(SYSTEM)
++CFLAGS = $(OPT) $(SYSTEM) -Wno-old-style-definition -Wno-pointer-sign -Wno-unused-but-set-variable
+ 
+ # GNU's gcc is very nice, if you've got it. Otherwise just cc.
+ #CC = cgcc -mshort -mbaserel
+diff -ur arc-5.21p.orig/arc.c arc-5.21p/arc.c
+--- arc-5.21p.orig/arc.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arc.c	2025-10-18 21:21:13.755468945 +0200
+@@ -72,6 +72,7 @@
+ */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+ #if	UNIX
+ #include <sys/types.h>
+@@ -89,16 +90,13 @@
+ char		*calloc(), *malloc(), *realloc();
+ #endif
+ 
+-VOID		addarc(), delarc(), extarc(), lstarc(), tstarc(), cvtarc(), runarc();
+-VOID		arcdie();
+-static	VOID	expandlst();
++static	VOID	expandlst(int n);
+ #if	_MTS
+ VOID		etoa();
+ #endif
+ #if	GEMDOS
+ long		_stksize = 30720;
+ #endif
+-char		*makefnam();	/* filename fixup routine */
+ 
+ 	/* Block I/O buffers */
+ 
+@@ -114,8 +112,6 @@
+ {
+ 	char		opt = 0;/* selected action */
+ 	char	       *a;	/* option pointer */
+-	VOID		upper();/* case conversion routine */
+-	char	       *envfind();	/* environment searcher */
+ 	int		n;	/* index */
+ 	char	       *arctemp2;
+ #if	GEMDOS
+@@ -434,7 +430,7 @@
+ expandlst(n)			/* expand an indirect reference */
+ 	int		n;	/* number of entry to expand */
+ {
+-	FILE	       *lf, *fopen();	/* list file, opener */
++	FILE	       *lf;	/* list file, opener */
+ 	char		buf[100];	/* input buffer */
+ 	int		x;	/* index */
+ 	char	       *p = lst[n] + 1; /* filename pointer */
+diff -ur arc-5.21p.orig/arcadd.c arc-5.21p/arcadd.c
+--- arc-5.21p.orig/arcadd.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcadd.c	2025-10-18 22:05:28.275420999 +0200
+@@ -17,6 +17,7 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ #if	_MTS
+ #include <mts.h>
+ #include <ctype.h>
+@@ -26,13 +27,14 @@
+ #include <strings.h>
+ #endif
+ 
+-static	int	addfile();
+-int	readhdr(), unlink();
+-#if	UNIX
+-int	izadir();
+-#endif
+-VOID	writehdr(), filecopy(), getstamp();
+-VOID	pack(), closearc(), openarc(), arcdie();
++static int addfile(char *path, char *name, int update, int fresh);
++static int addbunch(
++	int             nfiles,	/* number of files to add */
++	char          **path,	/* pointers to pathnames */
++	char          **name,	/* pointers to filenames */
++	int             move,	/* true if moving file */
++	int             update,	/* true if updating */
++	int             fresh);	/* true if freshening */
+ 
+ #ifndef	__STDC__
+ char           *malloc(), *realloc();	/* memory allocators */
+@@ -49,7 +51,7 @@
+ int             update;		/* true if updating */
+ int             fresh;		/* true if freshening */
+ {
+-	char           *d, *dir();	/* directory junk */
++	char           *d;	/* directory junk */
+ 	char            buf[STRLEN];	/* pathname buffer */
+ 	char          **path;	/* pointer to pointers to paths */
+ 	char          **name;	/* pointer to pointers to names */
+@@ -61,7 +63,6 @@
+ #if	MSDOS
+ 	unsigned int	coreleft();	/* remaining memory reporter */
+ #endif
+-	int		addbunch();
+ 
+ 	if (num < 1) {		/* if no files named */
+ 		num = 1;	/* then fake one */
+@@ -137,7 +138,7 @@
+ 		printf("No files were added.\n");
+ }
+ 
+-int
++static int
+ addbunch(nfiles, path, name, move, update, fresh)	/* add a bunch of files */
+ 	int             nfiles;	/* number of files to add */
+ 	char          **path;	/* pointers to pathnames */
+@@ -245,8 +246,8 @@
+ {
+ 	struct heads    nhdr;	/* data regarding the new file */
+ 	struct heads    ohdr;	/* data regarding an old file */
+-	FILE           *f, *fopen();	/* file to add, opener */
+-	long            starts, ftell();	/* file locations */
++	FILE           *f;	/* file to add, opener */
++	long            starts;	/* file locations */
+ 	int             upd = 0;/* true if replacing an entry */
+ 
+ #if	!_MTS
+diff -ur arc-5.21p.orig/arccode.c arc-5.21p/arccode.c
+--- arc-5.21p.orig/arccode.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arccode.c	2025-10-18 21:32:16.051710612 +0200
+@@ -21,6 +21,7 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+ static char    *p;		/* password pointer */
+ 
+diff -ur arc-5.21p.orig/arccvt.c arc-5.21p/arccvt.c
+--- arc-5.21p.orig/arccvt.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arccvt.c	2025-10-18 22:39:59.043695143 +0200
+@@ -21,11 +21,9 @@
+ #include <mts.h>
+ #endif
+ #include "arc.h"
++#include "proto.h"
+ 
+-int	match(), readhdr(), unpack(), unlink();
+-VOID	openarc(), rempath(), closearc(), arcdie(), pack();
+-VOID	writehdr(), filecopy();
+-static	VOID	cvtfile();
++static	VOID cvtfile(struct heads *hdr);
+ 
+ static char     tempname[STRLEN];	/* temp file name */
+ 
+@@ -38,8 +36,6 @@
+ 	int             cvt;	/* true to convert current file */
+ 	int             did[MAXARG];/* true when argument was used */
+ 	int             n;	/* index */
+-	char           *makefnam();	/* filename fixer */
+-	FILE           *fopen();/* file opener */
+ 
+ 	if (arctemp)		/* use temp area if specified */
+ 		sprintf(tempname, "%s.CVT", arctemp);
+@@ -96,8 +92,8 @@
+ cvtfile(hdr)			/* convert a file */
+ 	struct heads   *hdr;	/* pointer to header data */
+ {
+-	long            starts, ftell();	/* where the file goes */
+-	FILE           *tmp, *fopen();	/* temporary file */
++	long            starts;	/* where the file goes */
++	FILE           *tmp;	/* temporary file */
+ 
+ 	if (!(tmp = fopen(tempname, "w+b")))
+ 		arcdie("Unable to create temporary file %s", tempname);
+diff -ur arc-5.21p.orig/arcdata.c arc-5.21p/arcdata.c
+--- arc-5.21p.orig/arcdata.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcdata.c	2025-10-18 21:32:16.859706027 +0200
+@@ -22,6 +22,7 @@
+ 
+ #define DONT_DEFINE
+ #include "arc.h"
++#include "proto.h"
+ 
+ int             keepbak = 0;	/* true if saving the old archive */
+ #if	UNIX
+diff -ur arc-5.21p.orig/arcdel.c arc-5.21p/arcdel.c
+--- arc-5.21p.orig/arcdel.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcdel.c	2025-10-18 22:20:02.153472616 +0200
+@@ -18,9 +18,7 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
+-
+-VOID	arcdie(), rempath(), openarc(), closearc(), writehdr(), filecopy();
+-int	match(), readhdr();
++#include "proto.h"
+ 
+ VOID
+ delarc(num, arg)		/* remove files from archive */
+diff -ur arc-5.21p.orig/arcdos.c arc-5.21p/arcdos.c
+--- arc-5.21p.orig/arcdos.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcdos.c	2025-10-18 22:55:12.433513243 +0200
+@@ -22,6 +22,7 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+ #if	MSDOS
+ #include "fileio2.h"		/* needed for filehand */
+@@ -84,7 +86,7 @@
+ #endif
+ #if	UNIX
+ 	struct stat	buf;
+-	struct tm	*localtime(), *t;
++	struct tm	*t;
+ 
+ 	fstat(fileno(f), &buf);
+ 	t=localtime(&(buf.st_mtime));
+@@ -174,8 +176,6 @@
+ #if	UNIX
+ 	struct tm	tm;
+ 	struct timeval  tvp[2];
+-	int	utimes();
+-	long	tmclock();
+ 	tm.tm_sec = (time & 31) * 2;
+ 	tm.tm_min = (time >> 5) & 63;
+ 	tm.tm_hour = (time >> 11);
+diff -ur arc-5.21p.orig/arcext.c arc-5.21p/arcext.c
+--- arc-5.21p.orig/arcext.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcext.c	2025-10-18 22:40:09.363636711 +0200
+@@ -18,6 +18,7 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ #if	!MSDOS
+ #include <ctype.h>
+ #endif
+@@ -26,9 +27,7 @@
+ #include <strings.h>
+ #endif
+ 
+-VOID	openarc(), closearc(), setstamp();
+-int	match(), readhdr(), unpack();
+-static	VOID	extfile();
++static VOID extfile(struct heads *hdr, char *path, int prt);
+ 
+ #ifndef	__STDC__
+ char	*malloc();
+@@ -113,7 +112,7 @@
+ 	char           *path;	/* pointer to path name */
+ 	int             prt;	/* true if printing */
+ {
+-	FILE           *f, *fopen();	/* extracted file, opener */
++	FILE           *f;	/* extracted file, opener */
+ 	char            buf[STRLEN];	/* input buffer */
+ 	char            fix[STRLEN];	/* fixed name buffer */
+ 	char           *i;	/* string index */
+diff -ur arc-5.21p.orig/arcio.c arc-5.21p/arcio.c
+--- arc-5.21p.orig/arcio.c	2025-10-19 16:12:03.098719682 +0200
++++ arc-5.21p/arcio.c	2025-10-18 22:57:08.063851854 +0200
+@@ -19,13 +19,12 @@
+ */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ #if	_MTS
+ #include <mts.h>
+ #endif
+ #include <string.h>
+ 
+-VOID	arcdie();
+-
+ int
+ readhdr(hdr, f)			/* read a header from an archive */
+ 	struct heads   *hdr;	/* storage for header */
+diff -ur arc-5.21p.orig/arclst.c arc-5.21p/arclst.c
+--- arc-5.21p.orig/arclst.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arclst.c	2025-10-18 22:21:17.472046158 +0200
+@@ -19,10 +19,9 @@
+ */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+-VOID            rempath(), openarc(), closearc();
+-int             readhdr(), match();
+-static	VOID	lstfile();
++static VOID lstfile(struct heads *hdr);
+ 
+ VOID
+ lstarc(num, arg)		/* list files in archive */
+diff -ur arc-5.21p.orig/arclzw.c arc-5.21p/arclzw.c
+--- arc-5.21p.orig/arclzw.c	2025-10-19 16:12:03.120397967 +0200
++++ arc-5.21p/arclzw.c	2025-10-18 23:05:46.385871818 +0200
+@@ -33,8 +33,8 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+-VOID            arcdie();
+ #if	MSDOS
+ char           *setmem();
+ #else
+@@ -46,7 +46,9 @@
+ #endif
+ 
+ #include "proto.h"
+-static VOID     putcode();
++static VOID putcode(int code, FILE *t);
++static VOID upd_tab(u_short pred, u_short foll);
++
+ /* definitions for older style crunching */
+ 
+ #define FALSE    0
+@@ -136,7 +138,6 @@
+ static int      clear_flg;
+ static long     ratio;
+ static long     checkpoint;
+-VOID            upd_tab();
+ 
+ /*
+  * the next two codes should not be changed lightly, as they must not lie
+@@ -631,12 +632,9 @@
+  * release of a developmental copy forces us to leave this in.
+  */
+ 
+-static          u_short(*h) ();	/* pointer to hash function */
++static u_short(*h) (u_short pred, u_char foll); /* pointer to hash function */
+ 
+-static          u_short
+-oldh(pred, foll)		/* old hash function */
+-	u_short          pred;	/* code for preceeding string */
+-	u_char           foll;	/* value of following char */
++static u_short oldh(u_short pred, u_char foll)
+ {
+ 	long            local;	/* local hash value */
+ 
+@@ -645,10 +643,7 @@
+ 	return (local >> 6) & 0x0FFF;	/* return the middle 12 bits */
+ }
+ 
+-static          u_short
+-newh(pred, foll)		/* new hash function */
+-	u_short          pred;	/* code for preceeding string */
+-	u_char           foll;	/* value of following char */
++static u_short newh(u_short pred, u_char foll)
+ {
+ 	return (((pred + foll) & 0xFFFF) * 15073) & 0xFFF;	/* faster hash */
+ }
+@@ -744,7 +739,7 @@
+  * room.  This must be done elsewhere.
+  */
+ 
+-VOID
++static VOID
+ upd_tab(pred, foll)		/* add an entry to the table */
+ 	u_short          pred;	/* code for preceeding string */
+ 	u_short          foll;	/* character which follows string */
+diff -ur arc-5.21p.orig/arcmatch.c arc-5.21p/arcmatch.c
+--- arc-5.21p.orig/arcmatch.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcmatch.c	2025-10-19 16:03:20.882197379 +0200
+@@ -18,14 +18,13 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+ #include <string.h>
+ #if	BSD
+ #include <strings.h>
+ #endif
+ 
+-VOID	arcdie();
+-
+ int
+ match(n, t)			/* test name against template */
+ 	char           *n;	/* name to test */
+diff -ur arc-5.21p.orig/arcmisc.c arc-5.21p/arcmisc.c
+--- arc-5.21p.orig/arcmisc.c	2025-10-19 16:12:03.088040414 +0200
++++ arc-5.21p/arcmisc.c	2025-10-19 16:05:06.777553057 +0200
+@@ -6,7 +6,9 @@
+ #include <stdio.h>
+ #include <stdarg.h>
+ #include <ctype.h>
++#include <unistd.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+ #include <string.h>
+ #if	BSD
+@@ -67,7 +69,6 @@
+ #define DIRECT direct
+ #endif
+ #include <sys/stat.h>
+-	int	rename(), unlink();
+ #include <fcntl.h>
+ #endif
+ 
+@@ -92,7 +93,8 @@
+ int		free();
+ #endif
+ #endif
+-int             match();
++
++static int fmatch(const struct DIRECT *direntry);
+ 
+ /* Safe open for temp files */
+ FILE *
+@@ -109,11 +111,10 @@
+ move(oldnam, newnam)
+ 	char           *oldnam, *newnam;
+ {
+-	FILE           *fopen(), *old, *new;
++	FILE           *old, *new;
+ #if	!_MTS
+ 	struct stat     oldstat;
+ #endif
+-	VOID		filecopy();
+ #if	GEMDOS
+ 	if (Frename(0, oldnam, newnam))
+ #else
+@@ -248,7 +249,6 @@
+ 	char           *dirname;
+ 
+ {
+-	char           *getcwd();
+ #if	GEMDOS
+ 	int             drv;
+ 	char           *buf;
+@@ -311,11 +311,6 @@
+ 	static struct DIRECT **namelist;
+ 	static char   **NameList;
+ 	static char	namecopy[STRLEN], *dirname;
+-#if	UNIX
+-	int             alphasort();
+-	int             scandir();
+-#endif				/* UNIX */
+-	int             fmatch();
+ 	static int      Nnum = 0, ii;
+ 
+ 
+@@ -353,10 +348,7 @@
+ /*
+  * Filename match - here, * matches everything 
+  */
+-
+-int
+-fmatch(direntry)
+-	struct DIRECT  *direntry;
++static int fmatch(const struct DIRECT *direntry)
+ {
+ 	char           *string;
+ 
+diff -ur arc-5.21p.orig/arcpack.c arc-5.21p/arcpack.c
+--- arc-5.21p.orig/arcpack.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcpack.c	2025-10-18 23:15:56.674269351 +0200
+@@ -25,10 +25,8 @@
+ 
+ #include "proto.h"
+ 
+-VOID		setcode(), init_cm(), codebuf();
+-VOID		arcdie(), init_sq(), flsh_cm();
+-int		crcbuf();
+-u_int		ncr_buf();
++static u_int ncr_buf(u_int inbytes);
++static u_int getbuf(FILE *f);
+ 
+ int		lastc;
+ 
+@@ -59,9 +57,7 @@
+ 	long		ncrlen; /* length after packing */
+ 	long		huflen; /* length after squeezing */
+ 	long		lzwlen; /* length after crunching */
+-	long		pred_sq(), head_sq(), huf_buf();	/* stuff for squeezing */
+-	long		pred_cm();	/* dynamic crunching cleanup */
+-	long		tloc, ftell();	/* start of output */
++	long		tloc;	/* start of output */
+ 	u_int		inbytes = 0, pakbytes = 0;
+ 
+ 	/* first pass - see which method is best */
+@@ -195,7 +191,7 @@
+  * repeat marker.
+  */
+ 
+-u_int
++static u_int
+ ncr_buf(inbytes)
+ 	u_int		inbytes;	/* number of bytes in inbuf */
+ {
+@@ -243,7 +239,7 @@
+ 	return (pakptr - pakbuf);
+ }
+ 
+-u_int
++static u_int
+ getbuf(f)
+ 	FILE	       *f;
+ {
+diff -ur arc-5.21p.orig/arcrun.c arc-5.21p/arcrun.c
+--- arc-5.21p.orig/arcrun.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcrun.c	2025-10-18 23:17:35.145684866 +0200
+@@ -21,15 +21,13 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include "arc.h"
++#include "proto.h"
+ #if UNIX
+ #include <unistd.h>
+ #include <sys/stat.h>
+ #endif
+ 
+-VOID	rempath(), openarc(), closearc(), arcdie();
+-int	readhdr(), match(), unpack();
+-static	VOID	runfile();
+-FILE	*tmpopen();
++static  VOID runfile(struct heads *hdr, int num, char *arg[]);
+ 
+ VOID
+ runarc(num, arg)		/* run file from archive */
+@@ -37,9 +35,7 @@
+ 	char           *arg[];	/* pointers to arguments */
+ {
+ 	struct heads    hdr;	/* file header */
+-	char           *makefnam();	/* filename fixer */
+ 	char            buf[STRLEN];	/* filename buffer */
+-	FILE           *fopen();/* file opener */
+ 	char	       *dummy[2];
+ 
+ 	dummy[0]="dummy";
+@@ -68,8 +64,8 @@
+ 	int             num;	/* number of arguments */
+ 	char           *arg[];	/* pointers to arguments */
+ {
+-	FILE           *tmp, *fopen();	/* temporary file */
+-	char            buf[STRLEN], *makefnam();	/* temp file name, fixer */
++	FILE           *tmp;	/* temporary file */
++	char            buf[STRLEN];	/* temp file name, fixer */
+ #if	DOS
+ 	char		nbuf[64], *i, *rindex();
+ #endif
+diff -ur arc-5.21p.orig/arcsq.c arc-5.21p/arcsq.c
+--- arc-5.21p.orig/arcsq.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcsq.c	2025-10-19 15:50:55.427704503 +0200
+@@ -67,8 +67,13 @@
+ static int	cbitsrem;	/* # of code string bits left */
+ static u_short	ccode;		/* current code right justified */
+ 
+-static VOID	scale(), heap(), adjust(), bld_tree(), init_enc();
+-static int	cmptrees(), buildenc();
++static VOID scale(u_short ceil);
++static VOID heap(int list[], int length);
++static VOID adjust(int list[], int top, int bottom);
++static VOID bld_tree(int list[], int len);
++static VOID init_enc(VOID);
++static int buildenc(int level, int root);
++static int cmptrees(int a, int b);
+ 
+ extern u_char	*outbuf, *outbeg, *outend;
+ 
+diff -ur arc-5.21p.orig/arcsvc.c arc-5.21p/arcsvc.c
+--- arc-5.21p.orig/arcsvc.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcsvc.c	2025-10-19 15:51:27.963508443 +0200
+@@ -20,6 +20,7 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <fcntl.h>
++#include <unistd.h>
+ #include "arc.h"
+ #if	_MTS
+ #include <mts.h>
+@@ -27,15 +28,10 @@
+ 
+ #include "proto.h"
+ 
+-VOID	arcdie(), setstamp();
+-int	unlink();
+-
+ VOID
+ openarc(chg)			/* open archive */
+ 	int             chg;	/* true to open for changes */
+ {
+-	FILE           *fopen();/* file opener */
+-
+ 	if (!(arc = fopen(arcname, OPEN_R))) {
+ 		if (chg) {
+ 			if (note)
+diff -ur arc-5.21p.orig/arctst.c arc-5.21p/arctst.c
+--- arc-5.21p.orig/arctst.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arctst.c	2025-10-18 22:40:43.659442504 +0200
+@@ -17,15 +17,13 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
+-
+-VOID	openarc();
+-int	readhdr(), unpack();
++#include "proto.h"
+ 
+ VOID
+-tstarc()
++tstarc(void)
+ {				/* test integrity of an archive */
+ 	struct heads    hdr;	/* file header */
+-	long            arcsize, ftell();	/* archive size */
++	long            arcsize; /* archive size */
+ 
+ 	openarc(0);		/* open archive for reading */
+ 	fseek(arc, 0L, 2);	/* move to end of archive */
+diff -ur arc-5.21p.orig/arcunp.c arc-5.21p/arcunp.c
+--- arc-5.21p.orig/arcunp.c	2025-10-19 16:12:03.120660525 +0200
++++ arc-5.21p/arcunp.c	2025-10-18 22:40:50.146405771 +0200
+@@ -18,13 +18,11 @@
+  */
+ #include <stdio.h>
+ #include "arc.h"
++#include "proto.h"
+ #if	_MTS
+ #include <mts.h>
+ #endif
+ 
+-VOID	setcode(), init_usq(), init_ucr(), decomp();
+-VOID	arcdie(), codebuf();
+-
+ #include "proto.h"
+ 
+ /* stuff for repeat unpacking */
+diff -ur arc-5.21p.orig/arcusq.c arc-5.21p/arcusq.c
+--- arc-5.21p.orig/arcusq.c	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/arcusq.c	2025-10-18 21:06:34.357459273 +0200
+@@ -24,8 +24,6 @@
+ 
+ #include "proto.h"
+ 
+-VOID		arcdie();
+-
+ /* stuff for Huffman unsqueezing */
+ 
+ #define ERROR (-1)
+diff -ur arc-5.21p.orig/marc.c arc-5.21p/marc.c
+--- arc-5.21p.orig/marc.c	2025-10-19 16:12:03.109815338 +0200
++++ arc-5.21p/marc.c	2025-10-19 16:08:37.734269496 +0200
+@@ -25,6 +25,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include "arc.h"
++#include "proto.h"
+ 
+ #if	UNIX
+ #include <sys/types.h>
+@@ -38,9 +39,10 @@
+ #ifndef	__STDC__
+ char *calloc(), *malloc(), *realloc(); /* memory managers */
+ #endif
+-int gethdr(), match(), readhdr();
+-VOID	arcdie(), filecopy(), setstamp(), writehdr();
+-static VOID copyfile(), expandlst(), merge();
++static VOID expandlst(int n);
++static VOID merge(int nargs, char *arg[]);
++static int gethdr(FILE *f, struct heads *hdr);
++static VOID copyfile(FILE *f, struct heads *hdr, int ver);
+ 
+ FILE *src;			       /* source archive */
+ char srcname[STRLEN];		       /* source archive name */
+@@ -54,8 +56,6 @@
+ int nargs;			       /* number of arguments */
+ char *arg[];			       /* pointers to arguments */
+ {
+-    char *makefnam();
+-    char *envfind();
+ #if	!_MTS
+     char *arctemp2;		       /* temp file stuff */
+ #endif
+@@ -290,9 +290,8 @@
+     writehdr(&arch,new);	       /* mark the end of the archive */
+ }
+ 
+-int gethdr(f,hdr)		       /* special read header for merge */
+-FILE *f;			       /* file to read from */
+-struct heads *hdr;		       /* storage for header */
++/* special read header for merge */
++static int gethdr(FILE *f, struct heads *hdr)
+ {
+     char *i = hdr->name;	       /* string index */
+     int n;			       /* index */
+@@ -322,11 +321,10 @@
+ expandlst(n)			       /* expand an indirect reference */
+ int n;				       /* number of entry to expand */
+ {
+-    FILE *lf, *fopen();		       /* list file, opener */
++    FILE *lf;		       /* list file, opener */
+     char buf[100];		       /* input buffer */
+     int x;			       /* index */
+     char *p = lst[n]+1;		       /* filename pointer */
+-    char *makefnam();
+ 
+     if(*p)			       /* use name if one was given */
+     {	 makefnam(p,".CMD",buf);
+diff -ur arc-5.21p.orig/proto.h arc-5.21p/proto.h
+--- arc-5.21p.orig/proto.h	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/proto.h	2025-10-19 15:58:49.925845018 +0200
+@@ -1,13 +1,81 @@
+-u_int	getbuf PROTO ((FILE *f));
+-u_int	getb_ucr PROTO ((FILE *f));
+-u_int	getb_usq PROTO ((FILE *f));
+-u_int	getb_unp PROTO ((FILE *f));
+-VOID	hufb_tab PROTO ((u_char *buf, u_int len));
+-VOID	 lzw_buf PROTO ((u_char *buf, u_int len, FILE *f));
+-VOID	putb_unp PROTO ((u_char *buf, u_int len, FILE *f));
+-VOID	putb_ncr PROTO ((u_char *buf, u_int len, FILE *f));
+-VOID	putb_pak PROTO ((u_char *buf, u_int len, FILE *f));
+-VOID	upper PROTO ((char *string));
+-int		move PROTO ((char *oldnam, char *newnam));
+-int		crcbuf PROTO ((int, u_int, u_char *));
++#include <unistd.h>
++
++struct heads;
++struct DIRECT;
++struct tm;
++
+ FILE *	tmpopen PROTO ((char *path));
++
++VOID	runarc(int num, char *arg[]);
++VOID	cvtarc(int num, char *arg[]);
++VOID	lstarc(int num, char *arg[]);
++VOID	delarc(int num, char *arg[]);
++VOID	extarc(int num, char *arg[], int prt);
++VOID	addarc(int num, char *arg[], int move, int update, int fresh);
++VOID	tstarc(void);
++
++/* arcmisc.c */
++VOID	exitpause(void);
++FILE *	tmpopen(char *path);
++int	move(char *oldnam, char *newnam);
++char *	makefnam(char *rawfn, char *template, char *result);
++VOID	upper(char *string);
++VOID	arcdie(const char *s, ...);
++char *	gcdir(char *dirname);
++char *	dir(char *filename);
++
++/* arcio.c */
++int	readhdr(struct heads *hdr, FILE *f);
++VOID	writehdr(struct heads *hdr, FILE *f);
++VOID	filecopy(FILE *f, FILE *t, long size);
++
++/* arcpack.c */
++VOID	pack(FILE *f, FILE *t, struct heads *hdr);
++VOID	putb_pak(u_char *buf, u_int len, FILE *f);
++
++/* arcunp.c */
++int	unpack(FILE *f, FILE *t, struct heads *hdr);
++VOID	putb_ncr(u_char *buf, u_int len, FILE *t);
++VOID	putb_unp(u_char *buf, u_int len, FILE *f);
++u_int	getb_unp(FILE *f);
++
++/* arcdos.c */
++VOID	getstamp(FILE *f, unsigned short *date, unsigned short *time);
++VOID	setstamp(char *f, unsigned short date, unsigned short time);
++int	izadir(char *filename);
++
++/* arcsvc.c */
++VOID	openarc(int chg);
++VOID	closearc(int chg);
++int	crcbuf(register int crc, register u_int	len, register u_char *buf);
++
++/* arcmatch.c */
++int	match(char *n, char *t);
++VOID	rempath(int nargs, char *arg[]);
++
++/* arccode.c */
++VOID	setcode(void);
++VOID	codebuf(reg char *buf, u_int len);
++
++/* arcusq.c */
++VOID	init_usq(FILE *f);
++u_int	getb_usq(FILE *f);
++
++/* arclzw.c */
++VOID	init_cm(u_char *buf);
++VOID	lzw_buf(u_char *buf, u_int len, FILE *t);
++long	pred_cm(FILE *t);
++VOID	flsh_cm(FILE *t);
++VOID	decomp(int squash, FILE *f, FILE *t);
++VOID	init_ucr(int new, FILE *f);
++u_int	getb_ucr(FILE *f);
++
++/* arcsq.c */
++VOID	init_sq(void);
++VOID	hufb_tab(u_char *buf, u_int len);
++long	pred_sq(void);
++long	head_sq(void);
++long	huf_buf(u_char *pbuf, u_int plen, u_int len, FILE *ob);
++
++/* tmclock.c */
++long tmclock(struct tm *tm);

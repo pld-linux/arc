@@ -1,0 +1,26 @@
+Stop sharing storage for 2 different (squeeze / unsqueeze) algorithms to
+avoid aliasing problems with LTO.
+diff -up arc-5.21p/arcsq.c~ arc-5.21p/arcsq.c
+--- arc-5.21p/arcsq.c~	2025-10-19 15:50:55.000000000 +0200
++++ arc-5.21p/arcsq.c	2025-10-19 16:32:03.589839906 +0200
+@@ -43,7 +43,7 @@
+  * remaining nodes become the internal nodes of the final tree.
+  */
+ 
+-struct nd {			/* shared by unsqueezer */
++static struct nd {
+ 	u_short		weight; /* number of appearances */
+ 	short		tdepth; /* length on longest path in tree */
+ 	short		lchild, rchild; /* indices to next level */
+diff -up arc-5.21p/arcusq.c~ arc-5.21p/arcusq.c
+--- arc-5.21p/arcusq.c~	2025-10-18 21:06:34.000000000 +0200
++++ arc-5.21p/arcusq.c	2025-10-19 16:32:54.965534041 +0200
+@@ -31,7 +31,7 @@
+ #define SPEOF 256		/* special endfile token */
+ #define NUMVALS 257		/* 256 data values plus SPEOF */
+ 
+-extern struct nd {		/* decoding tree */
++static struct nd {
+ 	int		child[2];	/* left, right */
+ }		node[NUMVALS];	/* use large buffer */
+ 

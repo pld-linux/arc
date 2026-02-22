@@ -2,12 +2,23 @@ Summary:	Arc archiver
 Summary(pl.UTF-8):	Archiwizer arc
 Name:		arc
 Version:	5.21p
-Release:	2
+Release:	3
 License:	GPL v2
 Group:		Applications/Archiving
 Source0:	http://downloads.sourceforge.net/arc/%{name}-%{version}.tar.gz
 # Source0-md5:	902ce24b23422880d474df6f1d9eba5e
 Patch0:		%{name}-time.patch
+Patch1:		spelling.patch
+Patch2:		manpage-section-fix.patch
+Patch3:		clarify-license.patch
+Patch4:		hdrv1-read-fix.patch
+Patch5:		fix-arcdie.patch
+Patch6:		directory-traversel.patch
+Patch7:		compiler-warn.patch
+Patch8:		fcommon-fix.patch
+Patch9:		fix-function-prototypes.patch
+Patch10:	aliasing-fix.patch
+Patch11:	glibc-2.43.patch
 URL:		http://arc.sourceforge.net/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -23,6 +34,17 @@ stare archiwa .arc.
 %prep
 %setup -q
 %patch -P0 -p1
+%patch -P1 -p1
+%patch -P2 -p1
+%patch -P3 -p1
+%patch -P4 -p1
+%patch -P5 -p1
+%patch -P6 -p1
+%patch -P7 -p1
+%patch -P8 -p1
+%patch -P9 -p1
+%patch -P10 -p1
+%patch -P11 -p1
 
 %build
 %{__make} \

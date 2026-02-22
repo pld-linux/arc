@@ -1,0 +1,15 @@
+diff -up arc-5.21p/marc.c~ arc-5.21p/marc.c
+--- arc-5.21p/marc.c~	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/marc.c	2020-02-15 10:25:26.466829619 +0100
+@@ -297,9 +297,9 @@ struct heads *hdr;		       /* storage fo
+     char *i = hdr->name;	       /* string index */
+     int n;			       /* index */
+ 
+-    for(n=0; n<FNLEN; n++)	       /* fill name field */
++    for(n=0; n<(FNLEN-1); n++)	       /* fill name field */
+ 	 *i++ = 0176;		       /* impossible high value */
+-    *--i = '\0';		       /* properly end the name */
++    *i++ = '\0';		       /* properly end the name */
+ 
+     hdrver = 0;			       /* reset header version */
+     if(readhdr(hdr,f))		       /* use normal reading logic */
