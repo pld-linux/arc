@@ -1,0 +1,17 @@
+--- arc-5.21p/tmclock.c~	2010-08-07 15:06:42.000000000 +0200
++++ arc-5.21p/tmclock.c	2026-02-22 15:46:24.186668968 +0100
+@@ -82,12 +82,12 @@
+     }
+ 
+ 
+-long
++time_t
+ tmclock( tm )
+ struct tm *tm;
+     {
+     register long jd, sdc;
+-    long result;
++    time_t result;
+ 
+     if ( ( jd = tmjuliandate( tm ) ) == -1L )
+ 	return ( -1L );
